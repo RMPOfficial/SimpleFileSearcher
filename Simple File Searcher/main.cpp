@@ -445,11 +445,13 @@ int main(int argc, char* argv[])
 		size_t MA_sizeNOEND = (matcharray.size() - 1);
 		for (size_t i = 0; i < MA_sizeNOEND; i++) {
 			cout << matcharray[i] << ", ";
-			if (i % 5 == 0) {
+			if ((i % 5 == 0) && i != 0) {
 				cout << "\n";
 			}
 		} cout << matcharray[MA_sizeNOEND] << ".";
 	}
 end:
+	cout << "\n\nPress ENTER to exit..";
+	cin.get();
 	return 0;
 }
