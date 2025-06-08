@@ -9,6 +9,10 @@ This tool search for a pattern in files with the [KMP Algorythm](https://en.wiki
 - Replace the pattern by an other string, can set a limit
 - Delete the pattern, can set a limit
 
+## Known issues
+- Only can search and replace for ASCII characters (because of char and not wchar).
+- On 32 (86) bit systems can handle maximum 4gb files.
+
 # Usage
  SimpleFileSearcher.exe -s [Path to file] [PatternToSearchInFile] [flags] or no arguments.
  
