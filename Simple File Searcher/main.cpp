@@ -427,7 +427,7 @@ int main(int argc, char* argv[])
 		std::ofstream outFile;
 		if (flags & WPATHUSED) outFile.open(wpath, ios::binary);
 		else outFile.open(path, ios::binary);
-		if (!file.is_open()) {
+		if (!outFile.is_open()) {
 			cout << "Error open file to write!\n\nPress ENTER to exit..";
 			cin.get();
 			return 11;
