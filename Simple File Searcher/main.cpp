@@ -334,7 +334,7 @@ errorcheck:
 		cout << "-l [Limit replace/delete number]: Gives a limit how much patterns found the program can maximum replace or delete.\n";
 		cout << "-d / -D: Deletes the found pattern in the file, if -r / -R is active it will change nothing.\n";
 		cout << "-p / -P: Prints the array with match positions.\n\n";
-		cout << "Example usage: " << argv[0] << " -s C:/Users/Username/Downloads/text.txt ExampleOfPatternToFind -rp SomeRandomReplacementString\n\n";
+		cout << "Example usage: " << argv[0] << " -s C:/Users/Username/Downloads/text.txt ExampleOfPatternToFind -p -r SomeRandomReplacementString\n\n";
 		cout << "Press ENTER to exit..";
 		cin.get();
 		return 1;
