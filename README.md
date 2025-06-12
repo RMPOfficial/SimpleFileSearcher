@@ -1,7 +1,7 @@
 # SimpleFileSearcher
 
 ## Description
-This tool search for a pattern in files with the [KMP Algorythm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm) and can perform some features.
+This tool search for a pattern in files with the [KMP Algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm) and can perform some features.
 
 ## Features
 - Search for the pattern, can set a limit of pattern founds after what it will stop searching
