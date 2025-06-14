@@ -1,31 +1,46 @@
-﻿#include "KMP_algorythm.h"
+#include "KMP_algorythm.h"
 #include <filesystem>
 #include <string>
 #include <fstream>
-#include <shlwapi.h>
+#include <Windows.h>
 using namespace std::filesystem;
 using namespace std;
 
-enum Flag {
-	REPLACE				   = 1,
-	DEL					   = 2,
-	PRINTMATCHES		   = 4,
-	FILEPATHSUBMITTED	   = 8,
-	NEEDREPLACESTRING	   = 32,
-	NEEDSEARCHINFO		   = 64,
-	SHOWUSAGEINFO		   = 128,
-	WPATHCANCELED		   = 256,
-	WPATHUSED			   = 512,
-	LIMITSEARCH			   = 1024,
-	LIMITREPLACE		   = 2048,
-	NEEDSEARCHLIMITNUMBER  = 4096,
+enum Flag : uint16_t {
+	REPLACE = 1,
+	DEL = 2,
+	PRINTMATCHES = 4,
+	FILEPATHSUBMITTED = 8,
+	NEEDREPLACESTRING = 32,
+	NEEDSEARCHINFO = 64,
+	SHOWUSAGEINFO = 128,
+	WPATHCANCELED = 256,
+	WPATHUSED = 512,
+	LIMITSEARCH = 1024,
+	LIMITREPLACE = 2048,
+	NEEDSEARCHLIMITNUMBER = 4096,
 	NEEDREPLACELIMITNUMBER = 8192,
-	ONEMATCH			   = 16384
+	ONEMATCH = 16384
 };
 
-enum Miniflag {
-	BADNUMBER = 1,
-};
+static wstring utf8_to_wstring(const std::string& str) {
+	if (str.empty()) return L"";
+
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.data(), str.size(), NULL, 0);
+	wstring result(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, str.data(), str.size(), &result[0], size_needed);
+	return result;
+}
+
+static string wstring_to_utf8(const std::wstring& wstr) {
+	if (wstr.empty()) return "";
+
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), wstr.size(), NULL, 0, NULL, NULL);
+	string result(size_needed, 0);
+	WideCharToMultiByte(CP_UTF8, 0, wstr.data(), wstr.size(), &result[0], size_needed, NULL, NULL);
+	return result;
+}
+
 
 static void GetWPATHFromUser(wstring& wpath, uint16_t flags) {
 	bool firsttime = true;
@@ -49,7 +64,8 @@ path:
 	flags |= WPATHUSED;
 }
 
-static void CheckStringForOnlyNum(string &str) {
+static void CheckStringForOnlyNum(string& str) {
+	bool breakflag = false;
 	bool badnumber = false;
 	size_t str_len = str.size();
 
@@ -58,7 +74,7 @@ static void CheckStringForOnlyNum(string &str) {
 	if (!badnumber) {
 		for (size_t i = 0; i < str_len; i++) {
 			char c = str[i];
-			if (c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9') {
+			if (c < '0' || c > '9') {
 				badnumber = true;
 			}
 		}
@@ -74,11 +90,16 @@ static void CheckStringForOnlyNum(string &str) {
 		}
 		for (size_t i = 0; i < str_len; i++) {
 			char c = str[i];
-			if (c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9') {
-				continue;
+			if (c < '0' || c > '9') {
+				breakflag = true;
+				break;
 			}
-		} return;
-	}
+		}
+		if (breakflag) {
+			breakflag = false; continue;
+		}
+		badnumber = false;
+	} return;
 }
 
 
@@ -141,6 +162,7 @@ static void MainInputFromUser(string& replacestring, size_t& searchlimit, size_t
 }
 
 static string CharArrToStringCheckNum(char* strold, bool SearchOrReplace) {
+	bool breakflag = false;
 	bool badnumber = false;
 	string str = string(strold);
 	size_t str_len = str.size();
@@ -150,7 +172,7 @@ static string CharArrToStringCheckNum(char* strold, bool SearchOrReplace) {
 	if (!badnumber) {
 		for (size_t i = 0; i < str_len; i++) {
 			char c = str[i];
-			if (c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9') {
+			if (c < '0' || c > '9') {
 				badnumber = true;
 			}
 		}
@@ -166,11 +188,16 @@ static string CharArrToStringCheckNum(char* strold, bool SearchOrReplace) {
 		}
 		for (size_t i = 0; i < str_len; i++) {
 			char c = str[i];
-			if (c != '0' && c != '1' && c != '2' && c != '3' && c != '4' && c != '5' && c != '6' && c != '7' && c != '8' && c != '9') {
-				continue;
+			if (c < '0' || c > '9') {
+				breakflag = true;
+				break;
 			}
-		} return str;
-	}
+		}
+		if (breakflag) {
+			breakflag = false; continue;
+		}
+		badnumber = false;
+	} return str;
 }
 
 static string ReformatString(string& str) {
@@ -334,7 +361,7 @@ errorcheck:
 		cout << "-l [Limit replace/delete number]: Gives a limit how much patterns found the program can maximum replace or delete.\n";
 		cout << "-d / -D: Deletes the found pattern in the file, if -r / -R is active it will change nothing.\n";
 		cout << "-p / -P: Prints the array with match positions.\n\n";
-		cout << "Example usage: " << argv[0] << " -s C:/Users/Username/Downloads/text.txt ExampleOfPatternToFind -p -r SomeRandomReplacementString\n\n";
+		cout << "Example usage: " << argv[0] << " -s C:/Users/Username/Downloads/text.txt ExampleOfPatternToFind -r SomeRandomReplacementString\n\n";
 		cout << "Press ENTER to exit..";
 		cin.get();
 		return 1;
@@ -393,10 +420,11 @@ int main(int argc, char* argv[])
 	}
 
 	// Initialisation
-	vector<char> data(file.tellg());
+	vector<char> rawdata(file.tellg());
 	file.seekg(0);
-	file.read(data.data(), data.size());
+	file.read(rawdata.data(), rawdata.size());
 	file.close();
+	wstring data = utf8_to_wstring(rawdata.data());
 
 	vector<size_t> matcharray;
 	vector<size_t> lps;
@@ -421,7 +449,7 @@ int main(int argc, char* argv[])
 	}
 	if (foundcount == 1) flags |= ONEMATCH;
 
-	cout << "\nPattern successfully found " << foundcount << ((flags & ONEMATCH) ? "time!\n" : " times!\n");
+	cout << "\nPattern successfully found " << foundcount << ((flags & ONEMATCH) ? " time!\n" : " times!\n");
 
 	if ((flags & DEL) || (flags & REPLACE)) {
 		std::ofstream outFile;
@@ -432,7 +460,8 @@ int main(int argc, char* argv[])
 			cin.get();
 			return 11;
 		}
-		outFile.write(data.data(), data.size());
+		string resultdata = wstring_to_utf8(data);
+		outFile.write(resultdata.data(), resultdata.size());
 		outFile.close();
 		cout << "File successfully updated!\n";
 	}
